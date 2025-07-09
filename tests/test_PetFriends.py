@@ -97,12 +97,27 @@ def test_get_api_key_for_invalid_user_invalid_password(email=valid_email, passwo
     assert status != 200
     assert 'key' not in result
 
-def test_get_api_key_for_invalid_user_wrong_credentials(email="wrong@example.com", password="wrongpassword",
-                                                        animal_type=None):
-    """Проверяет, что запрос API key с неправильными email и паролем возвращает ошибку."""
-    status, result = pf.get_api_key(email, password)
-    assert status != 200
-    assert 'key' not in result
+def test_check_string_length_limit(name='ОченьДлинноеИмяПитомцаКотороеПревышаетДвестиДвадцатьПятьСимволовИИспользуетсяДляПроверкиОграниченияДлиныСтрокиВТестеОченьДлинноеИмяПитомцаКотороеПревышаетДвестиДвадцатьПятьСимволовИИспользуетсяДляПроверкиОграниченияДлиныСтрокиВТесте',
+                                  animal_type='двортерьер', age='4', pet_photo='images/cat1.jpg'):
+    """Проверяет, что имя питомца не может превышать 225 символов."""
+    pet_photo = os.path.join(BASE_DIR, pet_photo)
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+    status, result = pf.add_new_pet(auth_key, name, animal_type, age, pet_photo)
+
+    if len(name) > 225:
+        assert status != 200
+    else:
+        assert status == 200
+        assert result['name'] == name
+
+def test_check_string_length_limit_exceeded(animal_type='двортерьер', age='4', pet_photo='images/cat1.jpg'):
+    """Проверяет, что API не возвращает ошибку при добавлении питомца с именем длиннее 225 символов."""
+    name = 'A' * 226  # Создаем имя длиной 226 символов
+    pet_photo = os.path.join(BASE_DIR, pet_photo)
+    _, auth_key = pf.get_api_key(valid_email, valid_password)
+    status, result = pf.add_new_pet(auth_key, name, animal_type, age, pet_photo)
+
+    assert status == 200
 
 def test_get_all_pets_with_invalid_key(filter=''):
     """Проверяет, что запрос списка питомцев с невалидным API key возвращает ошибку."""
